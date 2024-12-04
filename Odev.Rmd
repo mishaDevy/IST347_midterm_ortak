@@ -1,0 +1,28 @@
+---
+title: "main"
+output: html_document
+date: "2024-12-04"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+# Veri okutma
+```{r veri okutma}
+
+set.seed(123)
+
+veri_kitle <- read.table("arasinav.txt", header = TRUE, sep = " ")
+veri_kitle[c("Occupation","City_Tier")]<-lapply(veri_kitle[c("Occupation","City_Tier")],as.factor)
+
+satir_no <- sample(1:nrow(veri_kitle),size = 2000)
+                  #vektor,size(boyut)
+
+veri_orneklem <- veri_kitle[satir_no,]
+veri <- veri_orneklem
+
+```
+
+```{r setup, include=FALSE}
+
+```

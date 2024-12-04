@@ -1,0 +1,301 @@
+---
+title: "Odev_Son"
+output:
+  html_document: default
+  pdf_document: default
+date: "2024-12-02"
+---
+
+```{r Veri Okutma, warning=FALSE}
+set.seed(123)
+
+veri_kitle <- read.table("arasinav.txt", header = TRUE, sep = " ")
+veri_kitle[c("Occupation","City_Tier")]<-lapply(veri_kitle[c("Occupation","City_Tier")],as.factor)
+
+satir_no <- sample(1:nrow(veri_kitle),size = 2000)
+                  #vektor,size(boyut)
+
+veri_orneklem <- veri_kitle[satir_no,]
+
+attach(veri_orneklem)
+
+```
+Veri kümemizin basit istatistiksel özetini verir.
+Girdilerimiz veri kümemizdir.
+Çıktı olarak ise, veri kümemizdeki her bir sayısal değişken için...
+Min.,Q1,Medyan,Ortalama,Q3 ve Max. değerleridir.
+Veri kümemizdeki her bir kategorik değişken için ise uzunluğunu verir.
+```{r Bölüm 9.1.1}
+summary(veri_orneklem)
+```
+Summary yorum...
+
+Medyan ve ortalama ile verimizin dağılımını yorumlayabiliriz.
+Ortalama ve medyana sahip olmak çarpıklığı tespit etmek için yeterlidir.
+```{r Bölüm 9.1.2}
+for(col in names(veri_orneklem)){
+  if(is.numeric(veri_orneklem[[col]])){ 
+    if(mean(veri_orneklem[[col]]) > median(veri_orneklem[[col]])){
+      print(paste(col,"sağa çarpık"))
+    }
+    if(mean(veri_orneklem[[col]]) < median(veri_orneklem[[col]])){
+      print(paste(col,"sola çarpık"))
+    }
+  }
+}
+
+```
+summary fonksiyonumuz standart sapma vb. ölçüleri vermez.
+
+Quantile fonksiyonu ile yüzdelik değerleri hesaplayabiliriz
+İlk argüman gözlemlerimiz, ikinci argüman hesaplamak
+istediğimiz yüzdelik değerdir.
+Çıktı olarak girdiğimiz yüzdelik değerin hangi gözleme karşılık
+geldiğini verir.
+```{r Bölüm 9.5.1}
+quantile(veri_orneklem$Income, 0.30)
+```
+# Bireylerin yüzde 30'unun geliri 19834.58'dan az diyebiliriz.
+# Ya da yüzde 70'inin geliri 19834.58 den fazla diyebiliriz.
+
+# İkinci argümanı kaldırırsak,
+# Çeyreklik değerleri elde ederiz.
+
+```{r Bölüm 9.5.2}
+quantile(veri_orneklem$Income)
+```
+# Gelirler için medyan 30261.258'dir.
+
+# Verileri z-skoruna dönüştürme (Normalleştirme)
+# scale fonksiyonu ile dönüşümü yapabiliriz.
+# Girdi olarak vektör,matris ve data frame girebiliriz.
+# Girdi olarak vektör girdiysek çıktı olarak normalize edilmiş vektörleri elde ederiz.
+# Girdi olarak matris ve data frame girdiysek her bir sütunun normalize edilmiş
+# halini döndürür.
+
+```{r Bölüm 9.7.1 }
+zveri <- scale(veri_orneklem$Income)
+head(zveri)
+```
+# Gelir verimizin normalize edilmiş değerleri
+
+ Ortalama için güven aralığı
+# t.test fonksiyonu ile güven aralığını bulabiliriz.
+# Örneklem büyüklüğümüz büyük olduğu için MLT devreye girer ve
+# test istatistiğimizin dağılımı normal dağılım olur.
+# Normal dağıldığı varsayımı ile anlamlı bir güven aralığı uygulayabiliriz.
+# Fonksiyona girdi olarak verimiz, çıktı olarak t tablo değeri, serbestlik derecesi,
+# p değeri, altenratif hipotez, güven aralığı ve örneklem ortalaması elde ederiz
+```{r Bölüm 9.9.1}
+for(col in names(veri_orneklem)){
+  if(is.numeric(veri_orneklem[[col]])){ 
+    ortalama_ga = t.test(veri_orneklem[[col]])
+    print(paste(col,"değişkeninin ortalama için güven aralığı"))
+    print(ortalama_ga)
+  }
+}
+```
+# Güven aralığı yorumu...WIP 
+
+# Fonksiyon varsayılan olarak %95 güven düzeyi ile çalışıyor özel olarak
+# güven düzeyi belirlemek istersek conf.level argümanını kullanabiliriz.
+```{r Bölüm 9.9.2}
+t.test(veri_orneklem$Income, conf.level = 0.99)
+```
+# Yorum...WIP
+
+ Medyan için güven aralığı
+# Medyan için güven aralığı oluştururken Wilcoxon İşaretli Sıra Testini kullanıyoruz.
+# wilcox.test fonksiyonu ile Wilcoxon İşaretli Sıra Testini yapabiliriz.
+# Girdi olarak verimizi ve güven aralığı istediğimiz için conf.int argümanını TRUE
+# alıyoruz.
+# Özel olarak güven düzeyi belirlemek istersek conf.level argümanını değiştirebiliriz.
+# Çıktı olarak V değeri, p-değeri, alternatif hipotez, güven aralığı ve
+# pseudomedian elde ediyoruz.
+# ÖNEMLİ: pseudomedian, medyan ile karıştırılmamalıdır.
+```{r Bölüm 9.10}
+for(col in names(veri_orneklem)){
+  if(is.numeric(veri_orneklem[[col]])){ 
+    medyan_ga = wilcox.test(veri_orneklem[[col]],conf.int = TRUE)
+    print(paste(col,"değişkeninin medyan için güven aralığı"))
+    print(medyan_ga)
+  }
+}
+
+```
+# Çıktı yorumu...WIP
+
+# Oran için hipotez testi
+# Veri setimizdeki bireylerin yarısından fazlası borç ödüyor iddasını test etmek
+# isteyelim. Bunun için prop.test fonksiyonu ile oran için test yapabiliriz.
+```{r Bölüm 9.11.1}
+x = sum(veri_orneklem['Loan_Repayment']>0) # Örneklemimizdeki borç ödeyenlerin sayısı
+n = nrow(veri_orneklem) # Örneklem büyüklüğümüz
+```
+# Fonksiyonumuza girdi olarak örneklem büyüklüğü, başarı sayısı bu durumda borç ödemek
+# ve test etmek istediğimiz oranı giriyoruz.
+# Örneğimizde büyüktürü test etmek istediğimiz için alternative argümanını 'greater'
+# olarak giriyoruz. Boş bırakırsak varsayılan olarak eşit değildir hipotezini test ediyor.
+
+# Çıktı olarak X-squared değeri, serbestlik derecesi, p-değeri, alternatif hipotezi
+# güven arlaığını ve örneklem oranını elde ediyoruz.
+```{r Bölüm 9.11.2}
+prop.test(x,n,0.5, alternative = 'greater')
+```
+# p-değeri 1 geliyor. Bu durumda sıfır hipotezi reddedilemez yani veri setimizdeki
+# bireylerin yarısından fazlası borç ödüyor diyemeyiz.
+
+# Kolmogorov–Smirnov testi
+# İki dağılımın aynı dağılımdan geldiğini test etmek için kullanılır.
+# Veri setimizdeki yaş değişkeninin normal dağılıp dağılmadığını test etmek isteyelim.
+
+# Test etmek için bir normal dağılım oluşturalım.
+```{r Bölüm 9.20.1}
+z <- rnorm(2000)
+```
+
+# ks.test fonksiyonu ile testimizi gerçekleştirebiliriz.
+# Girdi olarak karşılaştırmak istediğimiz dağılımları giriyoruz.
+# Çıktı olarak D değeri ve p-değerini elde ediyoruz.
+```{r Bölüm 9.20.2}
+ks.test(veri_orneklem$Age,z)
+```
+# p-değerimiz 0.05 den küçük olduğu için sıfır hipotezi reddedilir yani 
+# yaş değişkeninin dağılımı normal dağılıma uymaz.
+
+```{r Bölüm 10.2, warning=FALSE, message=FALSE}
+##10.2 Adding a Title and Labels
+library(patchwork)
+library(ggplot2)
+library(tidyr)
+library(dplyr)
+options(scipen = 10)
+
+
+ggplot(veri_orneklem, aes(Income,Rent)) + 
+  geom_point() +
+  labs(title = "Gelir ile Kira Giderinin Dağılımı" , x = "Gelir", y = "Kira")
+
+```
+
+```{r Bölüm 10.4}
+#10.4 Applying a Theme to a ggplot Figure
+grafik <- ggplot(veri_orneklem, aes(Income,Rent)) +
+  geom_point() + 
+  labs(title = "Gelir ile Kira Giderinin Dağılımı" , x = "Gelir", y = "Kira")
+
+grafik1 <- grafik + theme_minimal() #theme_bw(), theme_dark(), theme_classic(), theme_gray(), theme_linedraw(), theme_light(), theme_minimal(), theme_test(), theme_void()
+grafik2 <- grafik + theme_dark()
+grafik3 <- grafik + theme_gray()
+grafik4 <- grafik + theme_linedraw()
+
+grafik1 + grafik2 + grafik3 + grafik4
+```
+
+```{r Bölüm 10.10}
+#10.10 Creating a Bar Chart
+grafik5 <- ggplot(veri_orneklem, aes(Age,Income)) +
+  geom_bar(stat = "identity") +
+  labs(title = "Yaş ve Gelirlerin Bar Grafiği" , x = "Yaş" , y="Gelir")
+#Farklı bir şekilde çizdirmek istersek
+
+grafik6 <- ggplot(veri_orneklem, aes(Age,Income)) +
+  geom_bar(stat = "summary",fun = "mean" )+
+  labs(title = "Yaş ve Gelirlerin Bar Grafiği(Ortalama Gelir Bakımından)" , x = "Yaş" , y="Gelir")
+
+grafik5 + grafik6
+```
+
+```{r Bölüm 10.13}
+#10.13 Plotting a Line from x and y Points
+veri_orneklem <- veri_orneklem %>%
+  mutate(Age_group = cut(Age, breaks = seq(0, 100, by = 3), right = FALSE))
+
+veri_grup <- veri_orneklem %>%
+  group_by(Age_group) %>%
+  summarise(Income_mean = mean(Income))
+
+ggplot(veri_grup, aes(x = Age_group, y = Income_mean)) + 
+  geom_point() + 
+  geom_line(group = 1) + 
+  labs(
+    title = "3'lü Yaş Gruplarına Göre Gelir Ortalamaları",
+    x = "Yaş Grupları",
+    y = "Gelir Ortalaması"
+  )
+```
+
+```{r Bölüm 10.14, warning=FALSE}
+#10.14 Changing the Type, Width, or Color of a Line
+
+grafik7 <- ggplot(veri_grup, aes(x = Age_group, y = Income_mean)) + 
+  labs(title = "linetype(1), size(1), col(red)", 
+       x = "Yaş Grupları" , 
+       y = "Gelir Ortalaması") +
+  geom_line(linetype = 1, 
+            size = 1, 
+            col = "red", 
+            group = 1)
+
+grafik8 <- ggplot(veri_grup, aes(x = Age_group, y = Income_mean)) + 
+  labs(title = "linetype(2), size(1.5), col(red)", 
+       x = "Yaş Grupları" , 
+       y = "Gelir Ortalaması") +
+  geom_line(linetype = 2,  
+            size = 1.5, 
+            col = "blue", 
+            group = 1)
+
+grafik9 <- ggplot(veri_grup, aes(x = Age_group, y = Income_mean)) + 
+  labs(title = "linetype(5), size(2), col(green)", 
+       x = "Yaş" , 
+       y = "Gelir") +
+  geom_line(linetype = 5, 
+            size = 2, 
+            col = "green", 
+            group = 1) 
+
+grafik10 <- ggplot(veri_grup, aes(x = Age_group, y = Income_mean)) + 
+  labs(title = "linetype(6), size(2.5), col(black)", 
+       x = "Yaş Grupları" , 
+       y = "Gelir Ortalaması") +
+  geom_line(linetype = 6, 
+            size = 2.5, 
+            col = "black", 
+            group = 1) 
+
+grafik7 + grafik8 + grafik9+ grafik10
+```
+
+```{r Bölüm 10.19, message=FALSE}
+#10.19 Creating a Histogram
+
+ggplot(veri_orneklem) +
+  geom_histogram(aes(x = Income)) + 
+  labs(title = "Gelirlerin Histogram Dağılımı", x = "Gelir" , y = "Count")
+
+ggplot(veri_orneklem) +
+  geom_histogram(aes(x = Income), bins = 150) + 
+  labs(title = "Gelirlerin Histogram Dağılımı(Daha dar araliklar)", x = "Gelir" , y = "Count")
+```
+
+```{r Bölüm 10.22, warning=FALSE}
+#10.22 Creating Other Quantile–Quantile Plots
+
+est_df <- as.list(MASS::fitdistr(veri_orneklem$Income, "t")$estimate)[["df"]]
+
+
+ggplot(veri_orneklem) + 
+  aes(sample = Income) + 
+  geom_qq(distribution = qt, dparams = est_df ) + 
+  stat_qq_line(distribution = qt, dparams = est_df) 
+```
+
+```{r Bölüm 10.25}
+#10.25 Displaying Several Figures on One Page
+
+grafik1 + grafik5 + grafik8 + grafik10
+
+
+grafik3 / (grafik7 + grafik8)
+```
