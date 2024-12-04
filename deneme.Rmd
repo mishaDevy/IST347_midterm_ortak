@@ -298,6 +298,7 @@ grafik1 + grafik5 + grafik8 + grafik10
 
 
 grafik3 / (grafik7 + grafik8)
+<<<<<<< HEAD
 ```
 
 
@@ -308,3 +309,8 @@ grafik3 / (grafik7 + grafik8)
 
 
 SOLID SNAKE
+=======
+
+#github deneme b
+```
+>>>>>>> origin/b
