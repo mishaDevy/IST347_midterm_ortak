@@ -298,4 +298,6 @@ grafik1 + grafik5 + grafik8 + grafik10
 
 
 grafik3 / (grafik7 + grafik8)
+
+#github deneme b
 ```
